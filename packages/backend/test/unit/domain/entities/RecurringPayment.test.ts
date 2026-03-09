@@ -8,170 +8,190 @@ import {
 } from '../../../fixtures/recurringPayment.fixtures.js';
 
 describe('RecurringPayment', () => {
-  describe('create', () => {
-    it('should create an entity with correct values', () => {
+  describe('.create', () => {
+    it('正しい属性値を持つエンティティを生成すること', () => {
       const params = validCreateParams();
-      const entity = RecurringPayment.create(params);
 
-      expect(entity.name).toBe('Netflix');
-      expect(entity.price.value).toBe(1490);
-      expect(entity.billingInterval.intervalType).toBe('month');
-      expect(entity.billingInterval.frequency).toBe(1);
-      expect(entity.billingInterval.day).toBe(15);
-      expect(entity.status.isActive()).toBe(true);
-      expect(entity.memo).toBe('映画・ドラマ見放題');
-      expect(entity.id.value).toBeDefined();
-      expect(entity.createdAt).toBeInstanceOf(Date);
-      expect(entity.updatedAt).toBeInstanceOf(Date);
+      const sut = RecurringPayment.create(params);
+
+      expect(sut.name).toBe('Netflix');
+      expect(sut.price.value).toBe(1490);
+      expect(sut.billingInterval.intervalType).toBe('month');
+      expect(sut.billingInterval.frequency).toBe(1);
+      expect(sut.billingInterval.day).toBe(15);
+      expect(sut.status.isActive()).toBe(true);
+      expect(sut.memo).toBe('映画・ドラマ見放題');
+      expect(sut.id.value).toBeDefined();
+      expect(sut.createdAt).toBeInstanceOf(Date);
+      expect(sut.updatedAt).toBeInstanceOf(Date);
     });
 
-    it('should auto-generate a UUID id', () => {
-      const entity = RecurringPayment.create(validCreateParams());
-      expect(entity.id.value).toMatch(
+    it('UUID 形式の ID を自動生成すること', () => {
+      const sut = RecurringPayment.create(validCreateParams());
+
+      expect(sut.id.value).toMatch(
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
       );
     });
 
-    it('should set status to active', () => {
-      const entity = RecurringPayment.create(validCreateParams());
-      expect(entity.status.value).toBe('active');
+    it('ステータスを active に設定すること', () => {
+      const sut = RecurringPayment.create(validCreateParams());
+
+      expect(sut.status.value).toBe('active');
     });
 
-    it('should default memo to empty string', () => {
+    it('memo が省略された場合、空文字列をデフォルト値とすること', () => {
       const params = { ...validCreateParams(), memo: undefined };
-      const entity = RecurringPayment.create(params);
-      expect(entity.memo).toBe('');
+
+      const sut = RecurringPayment.create(params);
+
+      expect(sut.memo).toBe('');
     });
 
-    it('should create with yearly billing interval', () => {
-      const entity = RecurringPayment.create(validYearlyCreateParams());
-      expect(entity.billingInterval.intervalType).toBe('year');
-      expect(entity.billingInterval.month).toBe(1);
+    it('年次の支払い周期で生成できること', () => {
+      const sut = RecurringPayment.create(validYearlyCreateParams());
+
+      expect(sut.billingInterval.intervalType).toBe('year');
+      expect(sut.billingInterval.month).toBe(1);
     });
 
-    it('should throw on empty name', () => {
-      expect(() =>
-        RecurringPayment.create({ ...validCreateParams(), name: '' }),
-      ).toThrow('Name must not be empty');
-    });
+    describe('無効な値が渡された場合', () => {
+      it('空の名前で例外を投げること', () => {
+        expect(() =>
+          RecurringPayment.create({ ...validCreateParams(), name: '' }),
+        ).toThrow('Name must not be empty');
+      });
 
-    it('should throw on name over 100 chars', () => {
-      expect(() =>
-        RecurringPayment.create({ ...validCreateParams(), name: 'a'.repeat(101) }),
-      ).toThrow('Name must be 100 characters or less');
-    });
+      it('100文字超の名前で例外を投げること', () => {
+        expect(() =>
+          RecurringPayment.create({ ...validCreateParams(), name: 'a'.repeat(101) }),
+        ).toThrow('Name must be 100 characters or less');
+      });
 
-    it('should throw on memo over 500 chars', () => {
-      expect(() =>
-        RecurringPayment.create({ ...validCreateParams(), memo: 'a'.repeat(501) }),
-      ).toThrow('Memo must be 500 characters or less');
+      it('500文字超のメモで例外を投げること', () => {
+        expect(() =>
+          RecurringPayment.create({ ...validCreateParams(), memo: 'a'.repeat(501) }),
+        ).toThrow('Memo must be 500 characters or less');
+      });
     });
   });
 
-  describe('reconstruct', () => {
-    it('should restore entity from raw values', () => {
+  describe('.reconstruct', () => {
+    it('生の値からエンティティを復元できること', () => {
       const params = validReconstructParams();
-      const entity = RecurringPayment.reconstruct(params);
 
-      expect(entity.id.value).toBe(params.id);
-      expect(entity.name).toBe(params.name);
-      expect(entity.price.value).toBe(params.price);
-      expect(entity.status.value).toBe(params.status);
-      expect(entity.createdAt).toEqual(params.createdAt);
-      expect(entity.updatedAt).toEqual(params.updatedAt);
+      const sut = RecurringPayment.reconstruct(params);
+
+      expect(sut.id.value).toBe(params.id);
+      expect(sut.name).toBe(params.name);
+      expect(sut.price.value).toBe(params.price);
+      expect(sut.status.value).toBe(params.status);
+      expect(sut.createdAt).toEqual(params.createdAt);
+      expect(sut.updatedAt).toEqual(params.updatedAt);
     });
   });
 
-  describe('update', () => {
-    it('should return a new instance with updated fields', () => {
+  describe('#update', () => {
+    it('更新された値を持つ新しいインスタンスを返すこと', () => {
       const original = RecurringPayment.reconstruct(validReconstructParams());
-      const updated = original.update(validUpdateParams());
 
-      expect(updated).not.toBe(original);
-      expect(updated.name).toBe('Netflix Premium');
-      expect(updated.price.value).toBe(1990);
-      expect(updated.billingInterval.day).toBe(20);
-      expect(updated.memo).toBe('4K対応プラン');
+      const sut = original.update(validUpdateParams());
+
+      expect(sut).not.toBe(original);
+      expect(sut.name).toBe('Netflix Premium');
+      expect(sut.price.value).toBe(1990);
+      expect(sut.billingInterval.day).toBe(20);
+      expect(sut.memo).toBe('4K対応プラン');
     });
 
-    it('should preserve the original entity (immutability)', () => {
+    it('元のエンティティを変更しないこと（不変性）', () => {
       const original = RecurringPayment.reconstruct(validReconstructParams());
+
       original.update(validUpdateParams());
 
       expect(original.name).toBe('Netflix');
       expect(original.price.value).toBe(1490);
     });
 
-    it('should update updatedAt', () => {
+    it('updatedAt を更新すること', () => {
       const original = RecurringPayment.reconstruct(validReconstructParams());
-      const updated = original.update(validUpdateParams());
 
-      expect(updated.updatedAt.getTime()).toBeGreaterThanOrEqual(
+      const sut = original.update(validUpdateParams());
+
+      expect(sut.updatedAt.getTime()).toBeGreaterThanOrEqual(
         original.updatedAt.getTime(),
       );
     });
 
-    it('should preserve createdAt', () => {
+    it('createdAt を変更しないこと', () => {
       const original = RecurringPayment.reconstruct(validReconstructParams());
-      const updated = original.update(validUpdateParams());
 
-      expect(updated.createdAt).toEqual(original.createdAt);
+      const sut = original.update(validUpdateParams());
+
+      expect(sut.createdAt).toEqual(original.createdAt);
     });
 
-    it('should preserve id', () => {
+    it('id を変更しないこと', () => {
       const original = RecurringPayment.reconstruct(validReconstructParams());
-      const updated = original.update(validUpdateParams());
 
-      expect(updated.id.equals(original.id)).toBe(true);
+      const sut = original.update(validUpdateParams());
+
+      expect(sut.id.equals(original.id)).toBe(true);
     });
 
-    it('should allow status change from active to cancelled', () => {
-      const original = RecurringPayment.reconstruct(validReconstructParams());
-      const updated = original.update({
-        ...validUpdateParams(),
-        status: 'cancelled',
+    describe('ステータス遷移', () => {
+      it('active から cancelled に変更できること', () => {
+        const original = RecurringPayment.reconstruct(validReconstructParams());
+
+        const sut = original.update({
+          ...validUpdateParams(),
+          status: 'cancelled',
+        });
+
+        expect(sut.status.isCancelled()).toBe(true);
       });
 
-      expect(updated.status.isCancelled()).toBe(true);
-    });
+      it('cancelled から active に再契約できること', () => {
+        const cancelled = RecurringPayment.reconstruct({
+          ...validReconstructParams(),
+          status: 'cancelled',
+        });
 
-    it('should allow status change from cancelled to active (reactivation)', () => {
-      const cancelled = RecurringPayment.reconstruct({
-        ...validReconstructParams(),
-        status: 'cancelled',
-      });
-      const reactivated = cancelled.update({
-        ...validUpdateParams(),
-        status: 'active',
-      });
+        const sut = cancelled.update({
+          ...validUpdateParams(),
+          status: 'active',
+        });
 
-      expect(reactivated.status.isActive()).toBe(true);
+        expect(sut.status.isActive()).toBe(true);
+      });
     });
   });
 
-  describe('cancel', () => {
-    it('should return a new instance with cancelled status', () => {
+  describe('#cancel', () => {
+    it('cancelled ステータスの新しいインスタンスを返すこと', () => {
       const entity = RecurringPayment.create(validCreateParams());
-      const cancelled = entity.cancel();
 
-      expect(cancelled).not.toBe(entity);
-      expect(cancelled.status.isCancelled()).toBe(true);
+      const sut = entity.cancel();
+
+      expect(sut).not.toBe(entity);
+      expect(sut.status.isCancelled()).toBe(true);
     });
 
-    it('should throw if already cancelled', () => {
+    it('既に解約済みの場合は例外を投げること', () => {
       const entity = RecurringPayment.create(validCreateParams());
       const cancelled = entity.cancel();
 
       expect(() => cancelled.cancel()).toThrow('Invalid status transition');
     });
 
-    it('should preserve other fields', () => {
+    it('ステータス以外のフィールドを変更しないこと', () => {
       const entity = RecurringPayment.create(validCreateParams());
-      const cancelled = entity.cancel();
 
-      expect(cancelled.name).toBe(entity.name);
-      expect(cancelled.price.equals(entity.price)).toBe(true);
-      expect(cancelled.id.equals(entity.id)).toBe(true);
+      const sut = entity.cancel();
+
+      expect(sut.name).toBe(entity.name);
+      expect(sut.price.equals(entity.price)).toBe(true);
+      expect(sut.id.equals(entity.id)).toBe(true);
     });
   });
 });

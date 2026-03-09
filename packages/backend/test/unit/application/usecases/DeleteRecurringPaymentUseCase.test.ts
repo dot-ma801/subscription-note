@@ -6,26 +6,32 @@ import { validCreateParams } from '../../../fixtures/recurringPayment.fixtures.j
 
 describe('DeleteRecurringPaymentUseCase', () => {
   let repository: MockRecurringPaymentRepository;
-  let useCase: DeleteRecurringPaymentUseCase;
+  let sut: DeleteRecurringPaymentUseCase;
 
   beforeEach(() => {
     repository = new MockRecurringPaymentRepository();
-    useCase = new DeleteRecurringPaymentUseCase(repository);
+    sut = new DeleteRecurringPaymentUseCase(repository);
   });
 
-  it('should delete an existing entity', async () => {
-    const entity = RecurringPayment.create(validCreateParams());
-    await repository.save(entity);
+  describe('#execute', () => {
+    describe('存在する ID が渡された場合', () => {
+      it('エンティティを削除すること', async () => {
+        const entity = RecurringPayment.create(validCreateParams());
+        await repository.save(entity);
 
-    await useCase.execute(entity.id.value);
+        await sut.execute(entity.id.value);
 
-    const found = await repository.findById(entity.id);
-    expect(found).toBeNull();
-  });
+        const found = await repository.findById(entity.id);
+        expect(found).toBeNull();
+      });
+    });
 
-  it('should throw for non-existent id', async () => {
-    await expect(
-      useCase.execute('550e8400-e29b-41d4-a716-446655440000'),
-    ).rejects.toThrow('RecurringPayment not found');
+    describe('存在しない ID が渡された場合', () => {
+      it('EntityNotFoundError を投げること', async () => {
+        await expect(
+          sut.execute('550e8400-e29b-41d4-a716-446655440000'),
+        ).rejects.toThrow('RecurringPayment not found');
+      });
+    });
   });
 });

@@ -7,100 +7,127 @@ describe('calculateNextBillingDate', () => {
   const active = PaymentStatus.create('active');
   const cancelled = PaymentStatus.create('cancelled');
 
-  describe('cancelled status', () => {
-    it('should return null for cancelled status', () => {
+  describe('ステータスが cancelled の場合', () => {
+    it('null を返すこと', () => {
       const interval = BillingInterval.create({ intervalType: 'month', frequency: 1, day: 15 });
-      expect(calculateNextBillingDate(interval, cancelled)).toBeNull();
+
+      const result = calculateNextBillingDate(interval, cancelled);
+
+      expect(result).toBeNull();
     });
   });
 
-  describe('monthly billing', () => {
-    it('should return this month if today is before billing day', () => {
+  describe('月次払いの場合', () => {
+    it('今日が請求日より前なら今月の請求日を返すこと', () => {
       const interval = BillingInterval.create({ intervalType: 'month', frequency: 1, day: 15 });
-      const ref = new Date(2024, 0, 10); // Jan 10
+      const ref = new Date(2024, 0, 10); // 1月10日
+
       const result = calculateNextBillingDate(interval, active, ref);
+
       expect(result).toEqual(new Date(2024, 0, 15));
     });
 
-    it('should return this month if today is the billing day', () => {
+    it('今日が請求日と同じなら今月の請求日を返すこと', () => {
       const interval = BillingInterval.create({ intervalType: 'month', frequency: 1, day: 15 });
-      const ref = new Date(2024, 0, 15); // Jan 15
+      const ref = new Date(2024, 0, 15); // 1月15日
+
       const result = calculateNextBillingDate(interval, active, ref);
+
       expect(result).toEqual(new Date(2024, 0, 15));
     });
 
-    it('should return next month if today is after billing day', () => {
+    it('今日が請求日を過ぎていたら翌月の請求日を返すこと', () => {
       const interval = BillingInterval.create({ intervalType: 'month', frequency: 1, day: 15 });
-      const ref = new Date(2024, 0, 20); // Jan 20
+      const ref = new Date(2024, 0, 20); // 1月20日
+
       const result = calculateNextBillingDate(interval, active, ref);
+
       expect(result).toEqual(new Date(2024, 1, 15));
     });
 
-    it('should skip months based on frequency', () => {
+    it('frequency に応じて月をスキップすること', () => {
       const interval = BillingInterval.create({ intervalType: 'month', frequency: 3, day: 15 });
-      const ref = new Date(2024, 0, 20); // Jan 20
+      const ref = new Date(2024, 0, 20); // 1月20日
+
       const result = calculateNextBillingDate(interval, active, ref);
-      expect(result).toEqual(new Date(2024, 3, 15)); // April 15
+
+      expect(result).toEqual(new Date(2024, 3, 15)); // 4月15日
     });
 
-    it('should handle day overflow (31 in February)', () => {
+    it('請求日が月末を超える場合、月末日に丸めること（2月の31日→29日）', () => {
       const interval = BillingInterval.create({ intervalType: 'month', frequency: 1, day: 31 });
-      const ref = new Date(2024, 1, 1); // Feb 1 (leap year)
+      const ref = new Date(2024, 1, 1); // 2月1日（うるう年）
+
       const result = calculateNextBillingDate(interval, active, ref);
-      expect(result).toEqual(new Date(2024, 1, 29)); // Feb 29
+
+      expect(result).toEqual(new Date(2024, 1, 29));
     });
 
-    it('should handle year rollover', () => {
+    it('年をまたいで翌年1月の請求日を返すこと', () => {
       const interval = BillingInterval.create({ intervalType: 'month', frequency: 1, day: 15 });
-      const ref = new Date(2024, 11, 20); // Dec 20
+      const ref = new Date(2024, 11, 20); // 12月20日
+
       const result = calculateNextBillingDate(interval, active, ref);
-      expect(result).toEqual(new Date(2025, 0, 15)); // Jan 15
+
+      expect(result).toEqual(new Date(2025, 0, 15));
     });
   });
 
-  describe('yearly billing', () => {
-    it('should return this year if the date has not passed', () => {
+  describe('年次払いの場合', () => {
+    it('今年の請求日がまだなら今年の請求日を返すこと', () => {
       const interval = BillingInterval.create({ intervalType: 'year', frequency: 1, day: 15, month: 6 });
-      const ref = new Date(2024, 0, 10); // Jan 10
+      const ref = new Date(2024, 0, 10); // 1月10日
+
       const result = calculateNextBillingDate(interval, active, ref);
-      expect(result).toEqual(new Date(2024, 5, 15)); // Jun 15
+
+      expect(result).toEqual(new Date(2024, 5, 15)); // 6月15日
     });
 
-    it('should return next year if the date has passed', () => {
+    it('今年の請求日を過ぎていたら翌年の請求日を返すこと', () => {
       const interval = BillingInterval.create({ intervalType: 'year', frequency: 1, day: 15, month: 1 });
-      const ref = new Date(2024, 0, 20); // Jan 20
+      const ref = new Date(2024, 0, 20); // 1月20日
+
       const result = calculateNextBillingDate(interval, active, ref);
-      expect(result).toEqual(new Date(2025, 0, 15)); // Jan 15 next year
+
+      expect(result).toEqual(new Date(2025, 0, 15));
     });
 
-    it('should handle day overflow in yearly', () => {
+    it('請求日が月末を超える場合、月末日に丸めること（2月29日→28日）', () => {
       const interval = BillingInterval.create({ intervalType: 'year', frequency: 1, day: 29, month: 2 });
-      const ref = new Date(2025, 0, 1); // Jan 1, 2025 (not leap year)
+      const ref = new Date(2025, 0, 1); // 2025年1月1日（うるう年ではない）
+
       const result = calculateNextBillingDate(interval, active, ref);
-      expect(result).toEqual(new Date(2025, 1, 28)); // Feb 28
+
+      expect(result).toEqual(new Date(2025, 1, 28));
     });
   });
 
-  describe('quarterly billing', () => {
-    it('should return the next quarter date', () => {
+  describe('四半期払いの場合', () => {
+    it('今四半期の請求日を過ぎていたら次の四半期の請求日を返すこと', () => {
       const interval = BillingInterval.create({ intervalType: 'quarter', frequency: 1, day: 1 });
-      const ref = new Date(2024, 0, 15); // Jan 15 (past Q1 day 1)
+      const ref = new Date(2024, 0, 15); // 1月15日（Q1の1日を過ぎている）
+
       const result = calculateNextBillingDate(interval, active, ref);
-      expect(result).toEqual(new Date(2024, 3, 1)); // Apr 1
+
+      expect(result).toEqual(new Date(2024, 3, 1)); // 4月1日
     });
 
-    it('should return this quarter if the day has not passed', () => {
+    it('今四半期の請求日がまだなら今四半期の請求日を返すこと', () => {
       const interval = BillingInterval.create({ intervalType: 'quarter', frequency: 1, day: 15 });
-      const ref = new Date(2024, 0, 10); // Jan 10
+      const ref = new Date(2024, 0, 10); // 1月10日
+
       const result = calculateNextBillingDate(interval, active, ref);
-      expect(result).toEqual(new Date(2024, 0, 15)); // Jan 15
+
+      expect(result).toEqual(new Date(2024, 0, 15)); // 1月15日
     });
 
-    it('should roll to next year if all quarters passed', () => {
+    it('全四半期の請求日を過ぎていたら翌年の Q1 請求日を返すこと', () => {
       const interval = BillingInterval.create({ intervalType: 'quarter', frequency: 1, day: 1 });
-      const ref = new Date(2024, 9, 15); // Oct 15
+      const ref = new Date(2024, 9, 15); // 10月15日
+
       const result = calculateNextBillingDate(interval, active, ref);
-      expect(result).toEqual(new Date(2025, 0, 1)); // Jan 1 next year
+
+      expect(result).toEqual(new Date(2025, 0, 1));
     });
   });
 });

@@ -2,22 +2,23 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { createInMemoryDb } from '../../../src/infrastructure/database/db.js';
 import { RecurringPaymentRepository } from '../../../src/infrastructure/repositories/RecurringPaymentRepository.js';
 import { RecurringPayment } from '../../../src/domain/entities/RecurringPayment.js';
+import { RecurringPaymentId } from '../../../src/domain/valueObjects/RecurringPaymentId.js';
 import { validCreateParams, validYearlyCreateParams } from '../../fixtures/recurringPayment.fixtures.js';
 
 describe('RecurringPaymentRepository', () => {
-  let repository: RecurringPaymentRepository;
+  let sut: RecurringPaymentRepository;
 
   beforeEach(() => {
     const db = createInMemoryDb();
-    repository = new RecurringPaymentRepository(db);
+    sut = new RecurringPaymentRepository(db);
   });
 
-  describe('save and findById', () => {
-    it('should save and retrieve an entity', async () => {
+  describe('#save と #findById', () => {
+    it('保存したエンティティを ID で取得できること', async () => {
       const entity = RecurringPayment.create(validCreateParams());
-      await repository.save(entity);
 
-      const found = await repository.findById(entity.id);
+      await sut.save(entity);
+      const found = await sut.findById(entity.id);
 
       expect(found).not.toBeNull();
       expect(found!.id.value).toBe(entity.id.value);
@@ -31,39 +32,40 @@ describe('RecurringPaymentRepository', () => {
       expect(found!.memo).toBe('映画・ドラマ見放題');
     });
 
-    it('should save and retrieve a yearly entity', async () => {
+    it('年次払いのエンティティを保存・取得できること', async () => {
       const entity = RecurringPayment.create(validYearlyCreateParams());
-      await repository.save(entity);
 
-      const found = await repository.findById(entity.id);
+      await sut.save(entity);
+      const found = await sut.findById(entity.id);
 
       expect(found!.billingInterval.intervalType).toBe('year');
       expect(found!.billingInterval.month).toBe(1);
     });
   });
 
-  describe('findAll', () => {
-    it('should return all entities', async () => {
+  describe('#findAll', () => {
+    it('全エンティティを取得できること', async () => {
       const entity1 = RecurringPayment.create(validCreateParams());
       const entity2 = RecurringPayment.create(validYearlyCreateParams());
-      await repository.save(entity1);
-      await repository.save(entity2);
+      await sut.save(entity1);
+      await sut.save(entity2);
 
-      const all = await repository.findAll();
+      const all = await sut.findAll();
 
       expect(all).toHaveLength(2);
     });
 
-    it('should return empty array when no entities', async () => {
-      const all = await repository.findAll();
+    it('データが存在しない場合、空配列を返すこと', async () => {
+      const all = await sut.findAll();
+
       expect(all).toEqual([]);
     });
   });
 
-  describe('update', () => {
-    it('should update an existing entity', async () => {
+  describe('#update', () => {
+    it('既存のエンティティを更新できること', async () => {
       const entity = RecurringPayment.create(validCreateParams());
-      await repository.save(entity);
+      await sut.save(entity);
 
       const updated = entity.update({
         name: 'Netflix Premium',
@@ -72,9 +74,9 @@ describe('RecurringPaymentRepository', () => {
         status: 'active',
         memo: '4K対応プラン',
       });
-      await repository.update(updated);
+      await sut.update(updated);
 
-      const found = await repository.findById(entity.id);
+      const found = await sut.findById(entity.id);
       expect(found!.name).toBe('Netflix Premium');
       expect(found!.price.value).toBe(1990);
       expect(found!.billingInterval.day).toBe(20);
@@ -82,25 +84,24 @@ describe('RecurringPaymentRepository', () => {
     });
   });
 
-  describe('delete', () => {
-    it('should delete an entity', async () => {
+  describe('#delete', () => {
+    it('エンティティを削除できること', async () => {
       const entity = RecurringPayment.create(validCreateParams());
-      await repository.save(entity);
+      await sut.save(entity);
 
-      await repository.delete(entity.id);
+      await sut.delete(entity.id);
 
-      const found = await repository.findById(entity.id);
+      const found = await sut.findById(entity.id);
       expect(found).toBeNull();
     });
   });
 
-  describe('findById with non-existent id', () => {
-    it('should return null', async () => {
-      const { RecurringPaymentId } = await import(
-        '../../../src/domain/valueObjects/RecurringPaymentId.js'
-      );
+  describe('#findById（存在しない ID）', () => {
+    it('null を返すこと', async () => {
       const id = RecurringPaymentId.reconstruct('550e8400-e29b-41d4-a716-446655440000');
-      const found = await repository.findById(id);
+
+      const found = await sut.findById(id);
+
       expect(found).toBeNull();
     });
   });

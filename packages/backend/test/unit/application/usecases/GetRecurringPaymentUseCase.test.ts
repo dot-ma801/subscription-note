@@ -6,42 +6,50 @@ import { validCreateParams } from '../../../fixtures/recurringPayment.fixtures.j
 
 describe('GetRecurringPaymentUseCase', () => {
   let repository: MockRecurringPaymentRepository;
-  let useCase: GetRecurringPaymentUseCase;
+  let sut: GetRecurringPaymentUseCase;
 
   beforeEach(() => {
     repository = new MockRecurringPaymentRepository();
-    useCase = new GetRecurringPaymentUseCase(repository);
+    sut = new GetRecurringPaymentUseCase(repository);
   });
 
-  it('should return detail with nextBillingDate for existing entity', async () => {
-    const entity = RecurringPayment.create(validCreateParams());
-    await repository.save(entity);
+  describe('#execute', () => {
+    describe('存在する ID が渡された場合', () => {
+      it('nextBillingDate を含む詳細情報を返すこと', async () => {
+        const entity = RecurringPayment.create(validCreateParams());
+        await repository.save(entity);
 
-    const result = await useCase.execute(entity.id.value);
+        const result = await sut.execute(entity.id.value);
 
-    expect(result.id).toBe(entity.id.value);
-    expect(result.name).toBe('Netflix');
-    expect(result.nextBillingDate).toBeDefined();
-    expect(result.billingInterval).toBeDefined();
-    expect(result.memo).toBe('映画・ドラマ見放題');
-  });
+        expect(result.id).toBe(entity.id.value);
+        expect(result.name).toBe('Netflix');
+        expect(result.nextBillingDate).toBeDefined();
+        expect(result.billingInterval).toBeDefined();
+        expect(result.memo).toBe('映画・ドラマ見放題');
+      });
 
-  it('should return null nextBillingDate for cancelled entity', async () => {
-    const entity = RecurringPayment.create(validCreateParams()).cancel();
-    await repository.save(entity);
+      it('解約済みの場合は nextBillingDate が null であること', async () => {
+        const entity = RecurringPayment.create(validCreateParams()).cancel();
+        await repository.save(entity);
 
-    const result = await useCase.execute(entity.id.value);
+        const result = await sut.execute(entity.id.value);
 
-    expect(result.nextBillingDate).toBeNull();
-  });
+        expect(result.nextBillingDate).toBeNull();
+      });
+    });
 
-  it('should throw EntityNotFoundError for non-existent id', async () => {
-    await expect(
-      useCase.execute('550e8400-e29b-41d4-a716-446655440000'),
-    ).rejects.toThrow('RecurringPayment not found');
-  });
+    describe('存在しない ID が渡された場合', () => {
+      it('EntityNotFoundError を投げること', async () => {
+        await expect(
+          sut.execute('550e8400-e29b-41d4-a716-446655440000'),
+        ).rejects.toThrow('RecurringPayment not found');
+      });
+    });
 
-  it('should throw on invalid UUID', async () => {
-    await expect(useCase.execute('invalid')).rejects.toThrow('Invalid UUID format');
+    describe('無効な UUID が渡された場合', () => {
+      it('例外を投げること', async () => {
+        await expect(sut.execute('invalid')).rejects.toThrow('Invalid UUID format');
+      });
+    });
   });
 });
