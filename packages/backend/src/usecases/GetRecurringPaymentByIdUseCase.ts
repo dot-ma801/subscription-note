@@ -1,6 +1,6 @@
-import type { IRecurringPaymentRepository } from '@/domain/repositories/IRecurringPaymentRepository.js';
-import { RecurringPaymentId } from '@/domain/valueObjects/RecurringPaymentId.js';
-import { calculateNextBillingDate } from '@/domain/services/NextBillingDateCalculator.js';
+import type { IRecurringPaymentRepository } from '@/domain/repositories/IRecurringPaymentRepository';
+import { RecurringPaymentId } from '@/domain/valueObjects/RecurringPaymentId';
+import { calculateNextBillingDate } from '@/domain/services/NextBillingDateCalculator';
 import type { RecurringPaymentDetail } from '@subscription-note/shared';
 
 export class NotFoundError extends Error {

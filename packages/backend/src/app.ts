@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { recurringPaymentsRoute } from '@/presentation/routes/recurringPayments.js';
+import { recurringPaymentsRoute } from '@/presentation/routes/recurringPayments';
 
 export const app = new Hono();
 

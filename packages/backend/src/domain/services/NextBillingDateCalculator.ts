@@ -1,4 +1,4 @@
-import type { RecurringPayment } from '@/domain/entities/RecurringPayment.js';
+import type { RecurringPayment } from '@/domain/entities/RecurringPayment';
 
 /**
  * 次回の支払い日を計算するドメインサービス
