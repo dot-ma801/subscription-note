@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
-import { db } from '../../infrastructure/db/client.js';
-import { DrizzleRecurringPaymentRepository } from '../../infrastructure/repositories/DrizzleRecurringPaymentRepository.js';
-import { GetAllRecurringPaymentsUseCase } from '../../usecases/GetAllRecurringPaymentsUseCase.js';
-import { GetRecurringPaymentByIdUseCase, NotFoundError } from '../../usecases/GetRecurringPaymentByIdUseCase.js';
+import { db } from '@/infrastructure/db/client.js';
+import { DrizzleRecurringPaymentRepository } from '@/infrastructure/repositories/DrizzleRecurringPaymentRepository.js';
+import { GetAllRecurringPaymentsUseCase } from '@/usecases/GetAllRecurringPaymentsUseCase.js';
+import { GetRecurringPaymentByIdUseCase, NotFoundError } from '@/usecases/GetRecurringPaymentByIdUseCase.js';
 
 export const recurringPaymentsRoute = new Hono();
 

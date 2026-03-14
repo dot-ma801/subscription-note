@@ -1,5 +1,5 @@
-import type { RecurringPayment } from '../entities/RecurringPayment.js';
-import type { RecurringPaymentId } from '../valueObjects/RecurringPaymentId.js';
+import type { RecurringPayment } from '@/domain/entities/RecurringPayment.js';
+import type { RecurringPaymentId } from '@/domain/valueObjects/RecurringPaymentId.js';
 
 export interface IRecurringPaymentRepository {
   findById(id: RecurringPaymentId): Promise<RecurringPayment | null>;

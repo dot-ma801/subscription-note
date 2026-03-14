@@ -1,7 +1,7 @@
-import { RecurringPaymentId } from '../valueObjects/RecurringPaymentId.js';
-import { Price } from '../valueObjects/Price.js';
-import { BillingInterval, type IntervalType } from '../valueObjects/BillingInterval.js';
-import { PaymentStatus } from '../valueObjects/PaymentStatus.js';
+import { RecurringPaymentId } from '@/domain/valueObjects/RecurringPaymentId.js';
+import { Price } from '@/domain/valueObjects/Price.js';
+import { BillingInterval, type IntervalType } from '@/domain/valueObjects/BillingInterval.js';
+import { PaymentStatus } from '@/domain/valueObjects/PaymentStatus.js';
 
 export class RecurringPayment {
   private constructor(

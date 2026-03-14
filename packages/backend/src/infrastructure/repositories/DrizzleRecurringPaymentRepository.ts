@@ -1,11 +1,11 @@
 import { eq } from 'drizzle-orm';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-import { RecurringPayment } from '../../domain/entities/RecurringPayment.js';
-import type { RecurringPaymentId } from '../../domain/valueObjects/RecurringPaymentId.js';
-import type { IRecurringPaymentRepository } from '../../domain/repositories/IRecurringPaymentRepository.js';
-import { recurringPayments, type RecurringPaymentRow } from '../db/schema.js';
-import type * as schema from '../db/schema.js';
-import type { IntervalType } from '../../domain/valueObjects/BillingInterval.js';
+import { RecurringPayment } from '@/domain/entities/RecurringPayment.js';
+import type { RecurringPaymentId } from '@/domain/valueObjects/RecurringPaymentId.js';
+import type { IRecurringPaymentRepository } from '@/domain/repositories/IRecurringPaymentRepository.js';
+import { recurringPayments, type RecurringPaymentRow } from '@/infrastructure/db/schema.js';
+import type * as schema from '@/infrastructure/db/schema.js';
+import type { IntervalType } from '@/domain/valueObjects/BillingInterval.js';
 
 export class DrizzleRecurringPaymentRepository implements IRecurringPaymentRepository {
   constructor(private readonly db: BetterSQLite3Database<typeof schema>) {}

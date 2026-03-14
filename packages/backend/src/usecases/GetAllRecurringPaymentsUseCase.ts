@@ -1,5 +1,5 @@
-import type { IRecurringPaymentRepository } from '../domain/repositories/IRecurringPaymentRepository.js';
-import { calculateNextBillingDate } from '../domain/services/NextBillingDateCalculator.js';
+import type { IRecurringPaymentRepository } from '@/domain/repositories/IRecurringPaymentRepository.js';
+import { calculateNextBillingDate } from '@/domain/services/NextBillingDateCalculator.js';
 import type { RecurringPaymentListItem } from '@subscription-note/shared';
 
 export class GetAllRecurringPaymentsUseCase {
