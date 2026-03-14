@@ -1,10 +1,10 @@
-import { randomUUID } from 'node:crypto';
+import { v7 as uuidv7 } from 'uuid';
 
 export class RecurringPaymentId {
   private constructor(readonly value: string) {}
 
   static generate(): RecurringPaymentId {
-    return new RecurringPaymentId(randomUUID());
+    return new RecurringPaymentId(uuidv7());
   }
 
   static reconstruct(value: string): RecurringPaymentId {
