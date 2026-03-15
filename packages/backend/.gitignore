@@ -29,4 +29,3 @@ lerna-debug.log*
 
 # database
 *.sqlite
-drizzle/

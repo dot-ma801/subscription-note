@@ -36,67 +36,23 @@ pnpm install
 
 ### 2. データベースのセットアップ
 
-#### スキーマの適用
+#### マイグレーションの実行
 
-開発環境では `drizzle-kit push` でスキーマを直接 SQLite に反映します。
-
-```bash
-cd packages/backend
-npx drizzle-kit push
-```
-
-成功すると `packages/backend/db.sqlite` が作成されます。
-
-#### マイグレーションファイルを生成したい場合（オプション）
+`drizzle/` ディレクトリのマイグレーションファイルを順番に適用します。シードデータ（Netflix 1件）も含まれます。
 
 ```bash
 cd packages/backend
-npx drizzle-kit generate   # drizzle/ ディレクトリにマイグレーションファイルを生成
-npx drizzle-kit migrate    # マイグレーションを実行
+pnpm db:migrate
 ```
 
-### 3. 初期データの投入（シード）
+成功すると `packages/backend/db.sqlite` が作成され、動作確認用の Netflix レコードが1件投入されます。
 
-専用のシードスクリプトを使います。
-
-```bash
-cd packages/backend
-npx tsx src/infrastructure/db/seed.ts
-```
-
-> **seed.ts がまだ存在しない場合：** 以下の curl コマンドで手動投入できます。バックエンドを先に起動してから実行してください（[開発サーバーの起動](#開発サーバーの起動) 参照）。
-
-```bash
-# Netflix（毎月15日）
-curl -s -X POST http://localhost:3000/api/recurring-payments \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Netflix",
-    "price": 1490,
-    "billingInterval": { "intervalType": "month", "frequency": 1, "day": 15 },
-    "memo": "映画・ドラマ見放題"
-  }' | jq .
-
-# ChatGPT Plus（毎月20日）
-curl -s -X POST http://localhost:3000/api/recurring-payments \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "ChatGPT Plus",
-    "price": 2000,
-    "billingInterval": { "intervalType": "month", "frequency": 1, "day": 20 },
-    "memo": "GPT-4o 使い放題"
-  }' | jq .
-
-# Adobe Creative Cloud（毎年1月15日）
-curl -s -X POST http://localhost:3000/api/recurring-payments \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Adobe Creative Cloud",
-    "price": 98000,
-    "billingInterval": { "intervalType": "year", "frequency": 1, "day": 15, "month": 1 },
-    "memo": "Photoshop, Illustrator"
-  }' | jq .
-```
+> **再セットアップしたい場合：** `db.sqlite` を削除してから再実行してください。
+>
+> ```bash
+> rm packages/backend/db.sqlite
+> pnpm --filter @subscription-note/backend db:migrate
+> ```
 
 #### Drizzle Studio でデータを確認・編集する
 
