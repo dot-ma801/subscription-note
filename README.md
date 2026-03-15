@@ -51,14 +51,13 @@ pnpm db:migrate
 >
 > ```bash
 > rm packages/backend/db.sqlite
-> pnpm --filter @subscription-note/backend db:migrate
+> pnpm db:migrate
 > ```
 
 #### Drizzle Studio でデータを確認・編集する
 
 ```bash
-cd packages/backend
-npx drizzle-kit studio
+pnpm db:studio
 # → http://local.drizzle.studio が開きます
 ```
 
@@ -77,12 +76,10 @@ pnpm dev
 
 ```bash
 # バックエンド（ポート 3000）
-cd packages/backend
-pnpm dev
+pnpm be:dev
 
 # フロントエンド（ポート 5173）
-cd packages/frontend
-pnpm dev
+pnpm fe:dev
 ```
 
 | サービス | URL |
@@ -99,13 +96,11 @@ pnpm dev
 pnpm build
 
 # バックエンドのみ
-cd packages/backend
-pnpm build
+pnpm be:build
 # → packages/backend/dist/index.mjs が生成されます
 
 # フロントエンドのみ
-cd packages/frontend
-pnpm build
+pnpm fe:build
 ```
 
 ---
@@ -117,16 +112,11 @@ pnpm build
 pnpm test
 
 # バックエンドのみ
-cd packages/backend
-pnpm test             # 全テスト
-pnpm test:unit        # ユニットテストのみ
-pnpm test:integration # 統合テストのみ
-pnpm test:coverage    # カバレッジ付き
+pnpm be:test          # 全テスト
+pnpm test:coverage    # カバレッジ付き（全パッケージ）
 
 # フロントエンドのみ
-cd packages/frontend
-pnpm test:unit  # Vitest
-pnpm test:e2e   # Playwright
+pnpm fe:test    # Vitest
 ```
 
 ---
