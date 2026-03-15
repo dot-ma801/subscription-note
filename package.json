@@ -3,10 +3,19 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "pnpm -r run dev",
+    "dev": "pnpm -r --parallel run dev",
     "build": "pnpm -r run build",
     "test": "pnpm -r run test",
-    "test:coverage": "pnpm -r run test:coverage"
+    "test:coverage": "pnpm -r run test:coverage",
+    "fe:dev": "pnpm --filter @subscription-note/frontend dev",
+    "fe:build": "pnpm --filter @subscription-note/frontend build",
+    "fe:test": "pnpm --filter @subscription-note/frontend test:unit",
+    "be:dev": "pnpm --filter @subscription-note/backend dev",
+    "be:build": "pnpm --filter @subscription-note/backend build",
+    "be:test": "pnpm --filter @subscription-note/backend test",
+    "db:generate": "pnpm --filter @subscription-note/backend db:generate",
+    "db:migrate": "pnpm --filter @subscription-note/backend db:migrate",
+    "db:studio": "pnpm --filter @subscription-note/backend db:studio"
   },
   "packageManager": "pnpm@10.30.3",
   "workspaces": [
