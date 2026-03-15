@@ -4,38 +4,8 @@ import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { sql } from 'drizzle-orm';
 import { recurringPayments } from '@/infrastructure/db/schema';
-import { DrizzleRecurringPaymentRepository } from '@/infrastructure/repositories/DrizzleRecurringPaymentRepository';
-import { GetAllRecurringPaymentsUseCase } from '@/usecases/GetAllRecurringPaymentsUseCase';
-import { GetRecurringPaymentByIdUseCase, NotFoundError } from '@/usecases/GetRecurringPaymentByIdUseCase';
+import { createRecurringPaymentsRoute } from '@/presentation/routes/recurringPayments';
 import * as schema from '@/infrastructure/db/schema';
-
-function createTestApp(db: ReturnType<typeof drizzle>) {
-  const app = new Hono();
-
-  app.get('/api/recurring-payments', async (c) => {
-    const repository = new DrizzleRecurringPaymentRepository(db);
-    const useCase = new GetAllRecurringPaymentsUseCase(repository);
-    const payments = await useCase.execute();
-    return c.json(payments);
-  });
-
-  app.get('/api/recurring-payments/:id', async (c) => {
-    const id = c.req.param('id');
-    const repository = new DrizzleRecurringPaymentRepository(db);
-    const useCase = new GetRecurringPaymentByIdUseCase(repository);
-    try {
-      const payment = await useCase.execute(id);
-      return c.json(payment);
-    } catch (err) {
-      if (err instanceof NotFoundError) {
-        return c.json({ message: 'RecurringPayment not found' }, 404);
-      }
-      throw err;
-    }
-  });
-
-  return app;
-}
 
 function createInMemoryDb() {
   const sqlite = new Database(':memory:');
@@ -75,12 +45,11 @@ const SAMPLE_PAYMENT = {
 } as const;
 
 describe('GET /api/recurring-payments', () => {
-  let db: ReturnType<typeof createInMemoryDb>;
-  let app: ReturnType<typeof createTestApp>;
+  let app: Hono;
 
   beforeEach(() => {
-    db = createInMemoryDb();
-    app = createTestApp(db);
+    const db = createInMemoryDb();
+    app = new Hono().route('/api/recurring-payments', createRecurringPaymentsRoute(db));
   });
 
   describe('データが存在しない場合', () => {
@@ -101,7 +70,9 @@ describe('GET /api/recurring-payments', () => {
   describe('データが存在する場合', () => {
     it('200 とデータ一覧を返す', async () => {
       // Arrange
+      const db = createInMemoryDb();
       await db.insert(recurringPayments).values(SAMPLE_PAYMENT);
+      app = new Hono().route('/api/recurring-payments', createRecurringPaymentsRoute(db));
 
       // Act
       const response = await app.request('/api/recurring-payments');
@@ -114,7 +85,9 @@ describe('GET /api/recurring-payments', () => {
 
     it('レスポンスに必要なフィールドが含まれる', async () => {
       // Arrange
+      const db = createInMemoryDb();
       await db.insert(recurringPayments).values(SAMPLE_PAYMENT);
+      app = new Hono().route('/api/recurring-payments', createRecurringPaymentsRoute(db));
 
       // Act
       const response = await app.request('/api/recurring-payments');
@@ -135,11 +108,11 @@ describe('GET /api/recurring-payments', () => {
 
 describe('GET /api/recurring-payments/:id', () => {
   let db: ReturnType<typeof createInMemoryDb>;
-  let app: ReturnType<typeof createTestApp>;
+  let app: Hono;
 
   beforeEach(() => {
     db = createInMemoryDb();
-    app = createTestApp(db);
+    app = new Hono().route('/api/recurring-payments', createRecurringPaymentsRoute(db));
   });
 
   describe('存在する ID を指定した場合', () => {
