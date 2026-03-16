@@ -6,6 +6,7 @@ import { sql } from 'drizzle-orm';
 import { recurringPayments } from '@/infrastructure/db/schema';
 import { createRecurringPaymentsRoute } from '@/presentation/routes/recurringPayments';
 import * as schema from '@/infrastructure/db/schema';
+import type { RecurringPaymentListItem, RecurringPaymentDetail } from '@subscription-note/shared';
 
 function createInMemoryDb() {
   const sqlite = new Database(':memory:');
@@ -79,7 +80,7 @@ describe('GET /api/recurring-payments', () => {
 
       // Assert
       expect(response.status).toBe(200);
-      const body = await response.json() as unknown[];
+      const body = await response.json() as RecurringPaymentListItem[];
       expect(body).toHaveLength(1);
     });
 
@@ -93,15 +94,15 @@ describe('GET /api/recurring-payments', () => {
       const response = await app.request('/api/recurring-payments');
 
       // Assert
-      const [item] = await response.json() as Record<string, unknown>[];
+      const [item] = await response.json() as RecurringPaymentListItem[];
       expect(item).toMatchObject({
         id: SAMPLE_PAYMENT.id,
         name: 'Netflix',
         price: 1490,
         status: 'active',
       });
-      expect(item!['nextBillingDate']).not.toBeNull();
-      expect(item!['createdAt']).toBeDefined();
+      expect(item!.nextBillingDate).not.toBeNull();
+      expect(item!.createdAt).toBeDefined();
     });
   });
 });
@@ -125,7 +126,7 @@ describe('GET /api/recurring-payments/:id', () => {
 
       // Assert
       expect(response.status).toBe(200);
-      const body = await response.json() as Record<string, unknown>;
+      const body = await response.json() as RecurringPaymentDetail;
       expect(body).toMatchObject({
         id: SAMPLE_PAYMENT.id,
         name: 'Netflix',
@@ -143,8 +144,8 @@ describe('GET /api/recurring-payments/:id', () => {
       const response = await app.request(`/api/recurring-payments/${SAMPLE_PAYMENT.id}`);
 
       // Assert
-      const body = await response.json() as Record<string, unknown>;
-      expect(body['billingInterval']).toEqual({
+      const body = await response.json() as RecurringPaymentDetail;
+      expect(body.billingInterval).toEqual({
         intervalType: 'month',
         frequency: 1,
         day: 15,
@@ -172,8 +173,8 @@ describe('GET /api/recurring-payments/:id', () => {
       const response = await app.request(`/api/recurring-payments/${nonExistingId}`);
 
       // Assert
-      const body = await response.json() as Record<string, unknown>;
-      expect(body['message']).toBe('RecurringPayment not found');
+      const body = await response.json() as { message: string };
+      expect(body.message).toBe('RecurringPayment not found');
     });
   });
 });
