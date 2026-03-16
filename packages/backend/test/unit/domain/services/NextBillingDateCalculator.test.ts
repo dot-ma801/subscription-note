@@ -44,7 +44,7 @@ describe('calculateNextBillingDate', () => {
     it('null を返す', () => {
       // Arrange
       const payment = makeCancelledPayment();
-      const today = new Date('2025-03-15');
+      const today = new Date(2025, 2, 15); // 3月15日
 
       // Act
       const result = calculateNextBillingDate(payment, today);
@@ -58,7 +58,7 @@ describe('calculateNextBillingDate', () => {
     it('今日が支払日より前の場合、今月の支払日を返す', () => {
       // Arrange
       const payment = makeActivePayment({ intervalType: 'month', frequency: 1, day: 20 });
-      const today = new Date('2025-03-15');
+      const today = new Date(2025, 2, 15); // 3月15日
 
       // Act
       const result = calculateNextBillingDate(payment, today);
@@ -70,7 +70,7 @@ describe('calculateNextBillingDate', () => {
     it('今日が支払日と同じ場合、今月の支払日を返す', () => {
       // Arrange
       const payment = makeActivePayment({ intervalType: 'month', frequency: 1, day: 15 });
-      const today = new Date('2025-03-15');
+      const today = new Date(2025, 2, 15); // 3月15日
 
       // Act
       const result = calculateNextBillingDate(payment, today);
@@ -82,7 +82,7 @@ describe('calculateNextBillingDate', () => {
     it('今日が支払日より後の場合、翌月の支払日を返す', () => {
       // Arrange
       const payment = makeActivePayment({ intervalType: 'month', frequency: 1, day: 10 });
-      const today = new Date('2025-03-15');
+      const today = new Date(2025, 2, 15); // 3月15日
 
       // Act
       const result = calculateNextBillingDate(payment, today);
@@ -94,7 +94,7 @@ describe('calculateNextBillingDate', () => {
     it('frequency が 2 の場合、2ヶ月後の支払日を返す', () => {
       // Arrange
       const payment = makeActivePayment({ intervalType: 'month', frequency: 2, day: 10 });
-      const today = new Date('2025-03-15');
+      const today = new Date(2025, 2, 15); // 3月15日
 
       // Act
       const result = calculateNextBillingDate(payment, today);
@@ -108,7 +108,7 @@ describe('calculateNextBillingDate', () => {
     it('今日が支払日より後の場合、frequency * 3 ヶ月後の支払日を返す', () => {
       // Arrange
       const payment = makeActivePayment({ intervalType: 'quarter', frequency: 1, day: 10 });
-      const today = new Date('2025-03-15');
+      const today = new Date(2025, 2, 15); // 3月15日
 
       // Act
       const result = calculateNextBillingDate(payment, today);
@@ -120,7 +120,7 @@ describe('calculateNextBillingDate', () => {
     it('今日が支払日より前の場合、今月の支払日を返す', () => {
       // Arrange
       const payment = makeActivePayment({ intervalType: 'quarter', frequency: 1, day: 20 });
-      const today = new Date('2025-03-15');
+      const today = new Date(2025, 2, 15); // 3月15日
 
       // Act
       const result = calculateNextBillingDate(payment, today);
@@ -134,7 +134,7 @@ describe('calculateNextBillingDate', () => {
     it('今年の支払日がまだ来ていない場合、今年の支払日を返す', () => {
       // Arrange
       const payment = makeActivePayment({ intervalType: 'year', frequency: 1, day: 20, month: 6 });
-      const today = new Date('2025-03-15');
+      const today = new Date(2025, 2, 15); // 3月15日
 
       // Act
       const result = calculateNextBillingDate(payment, today);
@@ -146,7 +146,7 @@ describe('calculateNextBillingDate', () => {
     it('今年の支払日が過ぎた場合、翌年の支払日を返す', () => {
       // Arrange
       const payment = makeActivePayment({ intervalType: 'year', frequency: 1, day: 10, month: 2 });
-      const today = new Date('2025-03-15');
+      const today = new Date(2025, 2, 15); // 3月15日
 
       // Act
       const result = calculateNextBillingDate(payment, today);
@@ -158,7 +158,7 @@ describe('calculateNextBillingDate', () => {
     it('同じ月で支払日が過ぎた場合、翌年の支払日を返す', () => {
       // Arrange
       const payment = makeActivePayment({ intervalType: 'year', frequency: 1, day: 10, month: 3 });
-      const today = new Date('2025-03-15');
+      const today = new Date(2025, 2, 15); // 3月15日
 
       // Act
       const result = calculateNextBillingDate(payment, today);
@@ -170,7 +170,7 @@ describe('calculateNextBillingDate', () => {
     it('frequency が 2 の場合、2年後の支払日を返す', () => {
       // Arrange
       const payment = makeActivePayment({ intervalType: 'year', frequency: 2, day: 10, month: 2 });
-      const today = new Date('2025-03-15');
+      const today = new Date(2025, 2, 15); // 3月15日
 
       // Act
       const result = calculateNextBillingDate(payment, today);
