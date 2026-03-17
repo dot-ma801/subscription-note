@@ -11,6 +11,7 @@ import type { RecurringPaymentListItem, RecurringPaymentDetail } from '@subscrip
 function createInMemoryDb() {
   const sqlite = new Database(':memory:');
   // { schema } を渡すことで db.query.* の型安全なリレーショナルクエリ API が有効になる
+  // { schema } を渡すことで db.query.* の型安全なリレーショナルクエリ API が有効になる
   const db = drizzle(sqlite, { schema });
 
   db.run(sql`
@@ -81,6 +82,7 @@ describe('GET /api/recurring-payments', () => {
 
       // Assert
       expect(response.status).toBe(200);
+      // Fetch API の response.json() は Promise<unknown> を返すため、明示的にキャストする
       const body = await response.json() as RecurringPaymentListItem[];
       expect(body).toHaveLength(1);
     });

@@ -6,6 +6,19 @@ import type { IRecurringPaymentRepository } from '@/domain/repositories/IRecurri
 const EXISTING_ID = '01900000-0000-7000-8000-000000000001';
 const NON_EXISTING_ID = '01900000-0000-7000-8000-000000000999';
 
+const PAYMENT_FIXTURE = {
+  name: 'Netflix',
+  price: 1490,
+  billingIntervalType: 'month' as const,
+  billingFrequency: 1,
+  billingDay: 15,
+  billingMonth: null,
+  status: 'active' as const,
+  memo: 'スタンダードプラン',
+  createdAt: '2024-01-01T00:00:00.000Z',
+  updatedAt: '2024-06-01T00:00:00.000Z',
+};
+
 function makeRepository(payment: RecurringPayment | null): IRecurringPaymentRepository {
   return {
     findAll: vi.fn(),
@@ -17,19 +30,7 @@ function makeRepository(payment: RecurringPayment | null): IRecurringPaymentRepo
 }
 
 function makePayment(): RecurringPayment {
-  return RecurringPayment.reconstruct({
-    id: EXISTING_ID,
-    name: 'Netflix',
-    price: 1490,
-    billingIntervalType: 'month',
-    billingFrequency: 1,
-    billingDay: 15,
-    billingMonth: null,
-    status: 'active',
-    memo: 'スタンダードプラン',
-    createdAt: '2024-01-01T00:00:00.000Z',
-    updatedAt: '2024-06-01T00:00:00.000Z',
-  });
+  return RecurringPayment.reconstruct({ id: EXISTING_ID, ...PAYMENT_FIXTURE });
 }
 
 describe('GetRecurringPaymentByIdUseCase', () => {
@@ -46,10 +47,10 @@ describe('GetRecurringPaymentByIdUseCase', () => {
       // Assert
       expect(result).toMatchObject({
         id: EXISTING_ID,
-        name: 'Netflix',
-        price: 1490,
-        status: 'active',
-        memo: 'スタンダードプラン',
+        name: PAYMENT_FIXTURE.name,
+        price: PAYMENT_FIXTURE.price,
+        status: PAYMENT_FIXTURE.status,
+        memo: PAYMENT_FIXTURE.memo,
       });
     });
 

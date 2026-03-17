@@ -1,7 +1,34 @@
+// vi は Vitest のモックユーティリティ。vi.fn() でモック関数を生成できる
 import { describe, it, expect, vi } from 'vitest';
 import { GetAllRecurringPaymentsUseCase } from '@/usecases/GetAllRecurringPaymentsUseCase';
 import { RecurringPayment } from '@/domain/entities/RecurringPayment';
 import type { IRecurringPaymentRepository } from '@/domain/repositories/IRecurringPaymentRepository';
+
+const ACTIVE_PAYMENT_FIXTURE = {
+  name: 'Netflix',
+  price: 1490,
+  billingIntervalType: 'month' as const,
+  billingFrequency: 1,
+  billingDay: 15,
+  billingMonth: null,
+  status: 'active' as const,
+  memo: '',
+  createdAt: '2024-01-01T00:00:00.000Z',
+  updatedAt: '2024-01-01T00:00:00.000Z',
+};
+
+const CANCELLED_PAYMENT_FIXTURE = {
+  name: 'Spotify',
+  price: 980,
+  billingIntervalType: 'month' as const,
+  billingFrequency: 1,
+  billingDay: 20,
+  billingMonth: null,
+  status: 'cancelled' as const,
+  memo: '',
+  createdAt: '2024-01-01T00:00:00.000Z',
+  updatedAt: '2024-02-01T00:00:00.000Z',
+};
 
 function makeRepository(payments: RecurringPayment[]): IRecurringPaymentRepository {
   return {
@@ -14,35 +41,11 @@ function makeRepository(payments: RecurringPayment[]): IRecurringPaymentReposito
 }
 
 function makeActivePayment(id: string): RecurringPayment {
-  return RecurringPayment.reconstruct({
-    id,
-    name: 'Netflix',
-    price: 1490,
-    billingIntervalType: 'month',
-    billingFrequency: 1,
-    billingDay: 15,
-    billingMonth: null,
-    status: 'active',
-    memo: '',
-    createdAt: '2024-01-01T00:00:00.000Z',
-    updatedAt: '2024-01-01T00:00:00.000Z',
-  });
+  return RecurringPayment.reconstruct({ id, ...ACTIVE_PAYMENT_FIXTURE });
 }
 
 function makeCancelledPayment(id: string): RecurringPayment {
-  return RecurringPayment.reconstruct({
-    id,
-    name: 'Spotify',
-    price: 980,
-    billingIntervalType: 'month',
-    billingFrequency: 1,
-    billingDay: 20,
-    billingMonth: null,
-    status: 'cancelled',
-    memo: '',
-    createdAt: '2024-01-01T00:00:00.000Z',
-    updatedAt: '2024-02-01T00:00:00.000Z',
-  });
+  return RecurringPayment.reconstruct({ id, ...CANCELLED_PAYMENT_FIXTURE });
 }
 
 describe('GetAllRecurringPaymentsUseCase', () => {
@@ -60,9 +63,9 @@ describe('GetAllRecurringPaymentsUseCase', () => {
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({
         id: '01900000-0000-7000-8000-000000000001',
-        name: 'Netflix',
-        price: 1490,
-        status: 'active',
+        name: ACTIVE_PAYMENT_FIXTURE.name,
+        price: ACTIVE_PAYMENT_FIXTURE.price,
+        status: ACTIVE_PAYMENT_FIXTURE.status,
       });
     });
 
