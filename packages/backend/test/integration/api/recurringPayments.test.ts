@@ -10,6 +10,7 @@ import type { RecurringPaymentListItem, RecurringPaymentDetail } from '@subscrip
 
 function createInMemoryDb() {
   const sqlite = new Database(':memory:');
+  // { schema } を渡すことで db.query.* の型安全なリレーショナルクエリ API が有効になる
   const db = drizzle(sqlite, { schema });
 
   db.run(sql`

@@ -6,6 +6,8 @@ import { GetRecurringPaymentByIdUseCase, NotFoundError } from '@/usecases/GetRec
 
 type Db = ReturnType<typeof drizzle>;
 
+// テストでインメモリ DB を注入できるよう、ファクトリ関数として export する（DI パターン）。
+// 本番では app.ts から本物の db を渡し、テストでは :memory: の db を渡す。
 export function createRecurringPaymentsRoute(db: Db) {
   const route = new Hono();
 
