@@ -1,10 +1,11 @@
 import { Hono } from 'hono';
-import type { drizzle } from 'drizzle-orm/better-sqlite3';
+import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { DrizzleRecurringPaymentRepository } from '@/infrastructure/repositories/DrizzleRecurringPaymentRepository';
 import { GetAllRecurringPaymentsUseCase } from '@/usecases/GetAllRecurringPaymentsUseCase';
 import { GetRecurringPaymentByIdUseCase, NotFoundError } from '@/usecases/GetRecurringPaymentByIdUseCase';
+import type * as schema from '@/infrastructure/db/schema';
 
-type Db = ReturnType<typeof drizzle>;
+type Db = BetterSQLite3Database<typeof schema>;
 
 // テストでインメモリ DB を注入できるよう、ファクトリ関数として export する（DI パターン）。
 // 本番では app.ts から本物の db を渡し、テストでは :memory: の db を渡す。
