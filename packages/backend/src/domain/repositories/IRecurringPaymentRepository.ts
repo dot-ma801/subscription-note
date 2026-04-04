@@ -6,5 +6,4 @@ export interface IRecurringPaymentRepository {
   findAll(): Promise<RecurringPayment[]>;
   save(payment: RecurringPayment): Promise<void>;
   update(payment: RecurringPayment): Promise<void>;
-  delete(id: RecurringPaymentId): Promise<void>;
 }
