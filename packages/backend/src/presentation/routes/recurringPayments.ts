@@ -6,6 +6,7 @@ import { GetAllRecurringPaymentsUseCase } from '@/usecases/GetAllRecurringPaymen
 import { GetRecurringPaymentByIdUseCase, NotFoundError } from '@/usecases/GetRecurringPaymentByIdUseCase';
 import { CreateRecurringPaymentUseCase } from '@/usecases/CreateRecurringPaymentUseCase';
 import { UpdateRecurringPaymentUseCase } from '@/usecases/UpdateRecurringPaymentUseCase';
+import { CancelRecurringPaymentUseCase, AlreadyCancelledError } from '@/usecases/CancelRecurringPaymentUseCase';
 import { CreateRecurringPaymentSchema, UpdateRecurringPaymentSchema } from '@subscription-note/shared';
 import type * as schema from '@/infrastructure/db/schema';
 
@@ -59,6 +60,25 @@ export function createRecurringPaymentsRoute(db: Db) {
     } catch (err) {
       if (err instanceof NotFoundError) {
         return c.json({ message: 'RecurringPayment not found' }, 404);
+      }
+      throw err;
+    }
+  });
+
+  route.delete('/:id', async (c) => {
+    const id = c.req.param('id');
+    const repository = new DrizzleRecurringPaymentRepository(db);
+    const useCase = new CancelRecurringPaymentUseCase(repository);
+
+    try {
+      await useCase.execute(id);
+      return c.body(null, 204);
+    } catch (err) {
+      if (err instanceof NotFoundError) {
+        return c.json({ message: 'RecurringPayment not found' }, 404);
+      }
+      if (err instanceof AlreadyCancelledError) {
+        return c.json({ message: 'すでに解約済みです' }, 409);
       }
       throw err;
     }
