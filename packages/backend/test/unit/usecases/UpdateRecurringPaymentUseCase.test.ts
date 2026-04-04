@@ -92,6 +92,19 @@ describe('UpdateRecurringPaymentUseCase', () => {
       // Assert
       expect(repository.update).toHaveBeenCalledTimes(1);
     });
+
+    it('cancelled ステータスに更新した場合 nextBillingDate が null になる', async () => {
+      // Arrange
+      const repository = makeRepository(makePayment());
+      const useCase = new UpdateRecurringPaymentUseCase(repository);
+      const cancelledUpdate = { ...UPDATE_PARAMS, status: 'cancelled' as const };
+
+      // Act
+      const result = await useCase.execute(EXISTING_ID, cancelledUpdate);
+
+      // Assert
+      expect(result.nextBillingDate).toBeNull();
+    });
   });
 
   describe('年払いに更新する場合', () => {
