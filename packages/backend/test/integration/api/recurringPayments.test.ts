@@ -6,7 +6,7 @@ import { sql } from 'drizzle-orm';
 import { recurringPayments } from '@/infrastructure/db/schema';
 import { createRecurringPaymentsRoute } from '@/presentation/routes/recurringPayments';
 import * as schema from '@/infrastructure/db/schema';
-import type { RecurringPaymentListItem, RecurringPaymentDetail } from '@subscription-note/shared';
+import type { RecurringPaymentListItem, RecurringPaymentDetail, CreateRecurringPaymentRequest } from '@subscription-note/shared';
 
 function createInMemoryDb() {
   const sqlite = new Database(':memory:');
@@ -178,6 +178,115 @@ describe('GET /api/recurring-payments/:id', () => {
       // Assert
       const body = await response.json() as { message: string };
       expect(body.message).toBe('RecurringPayment not found');
+    });
+  });
+});
+
+describe('POST /api/recurring-payments', () => {
+  let db: ReturnType<typeof createInMemoryDb>;
+  let app: Hono;
+
+  beforeEach(() => {
+    db = createInMemoryDb();
+    app = new Hono().route('/api/recurring-payments', createRecurringPaymentsRoute(db));
+  });
+
+  const VALID_BODY: CreateRecurringPaymentRequest = {
+    name: 'Spotify',
+    price: 980,
+    billingInterval: {
+      intervalType: 'month',
+      frequency: 1,
+      day: 1,
+    },
+    memo: 'ファミリープラン',
+  };
+
+  describe('有効なリクエストボディの場合', () => {
+    it('201 と作成した支払い詳細を返す', async () => {
+      // Arrange
+      // (DBは空)
+
+      // Act
+      const response = await app.request('/api/recurring-payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(VALID_BODY),
+      });
+
+      // Assert
+      expect(response.status).toBe(201);
+      const body = await response.json() as RecurringPaymentDetail;
+      expect(body).toMatchObject({
+        name: VALID_BODY.name,
+        price: VALID_BODY.price,
+        status: 'active',
+        memo: VALID_BODY.memo,
+      });
+    });
+
+    it('レスポンスに ID が含まれる', async () => {
+      // Arrange
+      // (DBは空)
+
+      // Act
+      const response = await app.request('/api/recurring-payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(VALID_BODY),
+      });
+
+      // Assert
+      const body = await response.json() as RecurringPaymentDetail;
+      expect(body.id).toBeDefined();
+    });
+
+    it('billingInterval が正しく返る', async () => {
+      // Arrange
+      // (DBは空)
+
+      // Act
+      const response = await app.request('/api/recurring-payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(VALID_BODY),
+      });
+
+      // Assert
+      const body = await response.json() as RecurringPaymentDetail;
+      expect(body.billingInterval).toEqual(VALID_BODY.billingInterval);
+    });
+  });
+
+  describe('バリデーションエラーの場合', () => {
+    it('name が空文字のとき 400 を返す', async () => {
+      // Arrange
+      const invalidBody = { ...VALID_BODY, name: '' };
+
+      // Act
+      const response = await app.request('/api/recurring-payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(invalidBody),
+      });
+
+      // Assert
+      expect(response.status).toBe(400);
+    });
+
+    it('price が 0 以下のとき 400 を返す', async () => {
+      // Arrange
+      const invalidBody = { ...VALID_BODY, price: 0 };
+
+      // Act
+      const response = await app.request('/api/recurring-payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(invalidBody),
+      });
+
+      // Assert
+      expect(response.status).toBe(400);
     });
   });
 });
