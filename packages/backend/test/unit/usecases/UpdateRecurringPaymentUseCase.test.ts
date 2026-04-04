@@ -95,6 +95,37 @@ describe('UpdateRecurringPaymentUseCase', () => {
     });
   });
 
+  describe('年払いに更新する場合', () => {
+    it('billingInterval に month が含まれる', async () => {
+      // Arrange
+      const repository = makeRepository(makePayment());
+      const useCase = new UpdateRecurringPaymentUseCase(repository);
+      const yearlyUpdate = {
+        name: 'Adobe CC',
+        price: 72336,
+        billingInterval: {
+          intervalType: 'year' as const,
+          frequency: 1,
+          day: 1,
+          month: 4,
+        },
+        status: 'active' as const,
+        memo: '',
+      };
+
+      // Act
+      const result = await useCase.execute(EXISTING_ID, yearlyUpdate);
+
+      // Assert
+      expect(result.billingInterval).toEqual({
+        intervalType: 'year',
+        frequency: 1,
+        day: 1,
+        month: 4,
+      });
+    });
+  });
+
   describe('存在しない ID を指定した場合', () => {
     it('NotFoundError をスローする', async () => {
       // Arrange
