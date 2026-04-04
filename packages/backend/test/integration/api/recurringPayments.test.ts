@@ -290,3 +290,100 @@ describe('POST /api/recurring-payments', () => {
     });
   });
 });
+
+describe('PUT /api/recurring-payments/:id', () => {
+  let db: ReturnType<typeof createInMemoryDb>;
+  let app: Hono;
+
+  beforeEach(async () => {
+    db = createInMemoryDb();
+    await db.insert(recurringPayments).values(SAMPLE_PAYMENT);
+    app = new Hono().route('/api/recurring-payments', createRecurringPaymentsRoute(db));
+  });
+
+  const UPDATE_BODY = {
+    name: 'Netflix プレミアム',
+    price: 1980,
+    billingInterval: {
+      intervalType: 'month' as const,
+      frequency: 1,
+      day: 20,
+    },
+    status: 'active' as const,
+    memo: 'プレミアムプランに変更',
+  };
+
+  describe('存在する ID を指定した場合', () => {
+    it('200 と更新後の支払い詳細を返す', async () => {
+      // Arrange
+      // (beforeEach でデータ挿入済み)
+
+      // Act
+      const response = await app.request(`/api/recurring-payments/${SAMPLE_PAYMENT.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(UPDATE_BODY),
+      });
+
+      // Assert
+      expect(response.status).toBe(200);
+      const body = await response.json() as RecurringPaymentDetail;
+      expect(body).toMatchObject({
+        id: SAMPLE_PAYMENT.id,
+        name: UPDATE_BODY.name,
+        price: UPDATE_BODY.price,
+        memo: UPDATE_BODY.memo,
+      });
+    });
+
+    it('billingInterval が更新される', async () => {
+      // Arrange
+      // (beforeEach でデータ挿入済み)
+
+      // Act
+      const response = await app.request(`/api/recurring-payments/${SAMPLE_PAYMENT.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(UPDATE_BODY),
+      });
+
+      // Assert
+      const body = await response.json() as RecurringPaymentDetail;
+      expect(body.billingInterval).toEqual(UPDATE_BODY.billingInterval);
+    });
+  });
+
+  describe('存在しない ID を指定した場合', () => {
+    it('404 を返す', async () => {
+      // Arrange
+      const nonExistingId = '01900000-0000-7000-8000-000000000999';
+
+      // Act
+      const response = await app.request(`/api/recurring-payments/${nonExistingId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(UPDATE_BODY),
+      });
+
+      // Assert
+      expect(response.status).toBe(404);
+    });
+  });
+
+  describe('バリデーションエラーの場合', () => {
+    it('price が 0 以下のとき 400 を返す', async () => {
+      // Arrange
+      const invalidBody = { ...UPDATE_BODY, price: -1 };
+
+      // Act
+      const response = await app.request(`/api/recurring-payments/${SAMPLE_PAYMENT.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(invalidBody),
+      });
+
+      // Assert
+      expect(response.status).toBe(400);
+    });
+  });
+});
