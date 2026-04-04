@@ -387,3 +387,92 @@ describe('PUT /api/recurring-payments/:id', () => {
     });
   });
 });
+
+describe('DELETE /api/recurring-payments/:id', () => {
+  let db: ReturnType<typeof createInMemoryDb>;
+  let app: Hono;
+
+  beforeEach(async () => {
+    db = createInMemoryDb();
+    await db.insert(recurringPayments).values(SAMPLE_PAYMENT);
+    app = new Hono().route('/api/recurring-payments', createRecurringPaymentsRoute(db));
+  });
+
+  describe('active な支払いを解約する場合', () => {
+    it('204 を返す', async () => {
+      // Arrange
+      // (beforeEach でデータ挿入済み)
+
+      // Act
+      const response = await app.request(`/api/recurring-payments/${SAMPLE_PAYMENT.id}`, {
+        method: 'DELETE',
+      });
+
+      // Assert
+      expect(response.status).toBe(204);
+    });
+
+    it('レスポンスボディが空である', async () => {
+      // Arrange
+      // (beforeEach でデータ挿入済み)
+
+      // Act
+      const response = await app.request(`/api/recurring-payments/${SAMPLE_PAYMENT.id}`, {
+        method: 'DELETE',
+      });
+
+      // Assert
+      const text = await response.text();
+      expect(text).toBe('');
+    });
+  });
+
+  describe('存在しない ID を指定した場合', () => {
+    it('404 を返す', async () => {
+      // Arrange
+      const nonExistingId = '01900000-0000-7000-8000-000000000999';
+
+      // Act
+      const response = await app.request(`/api/recurring-payments/${nonExistingId}`, {
+        method: 'DELETE',
+      });
+
+      // Assert
+      expect(response.status).toBe(404);
+    });
+  });
+
+  describe('すでに解約済みの支払いを解約する場合', () => {
+    it('409 を返す', async () => {
+      // Arrange
+      // 1回目の解約
+      await app.request(`/api/recurring-payments/${SAMPLE_PAYMENT.id}`, {
+        method: 'DELETE',
+      });
+
+      // Act
+      const response = await app.request(`/api/recurring-payments/${SAMPLE_PAYMENT.id}`, {
+        method: 'DELETE',
+      });
+
+      // Assert
+      expect(response.status).toBe(409);
+    });
+
+    it('エラーメッセージが含まれる', async () => {
+      // Arrange
+      await app.request(`/api/recurring-payments/${SAMPLE_PAYMENT.id}`, {
+        method: 'DELETE',
+      });
+
+      // Act
+      const response = await app.request(`/api/recurring-payments/${SAMPLE_PAYMENT.id}`, {
+        method: 'DELETE',
+      });
+
+      // Assert
+      const body = await response.json() as { message: string };
+      expect(body.message).toBe('すでに解約済みです');
+    });
+  });
+});
