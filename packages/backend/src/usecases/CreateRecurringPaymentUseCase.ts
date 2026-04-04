@@ -40,7 +40,9 @@ export class CreateRecurringPaymentUseCase {
       memo: payment.memo,
       createdAt: payment.createdAt.toISOString(),
       updatedAt: payment.updatedAt.toISOString(),
-      nextBillingDate: nextBillingDate ? nextBillingDate.toISOString() : null,
+      // RecurringPayment.create() は status を常に 'active' で生成するため、
+      // calculateNextBillingDate() は null を返さない。
+      nextBillingDate: nextBillingDate!.toISOString(),
     };
   }
 }
