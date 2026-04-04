@@ -1,10 +1,16 @@
 import { Hono } from 'hono';
-import type { drizzle } from 'drizzle-orm/better-sqlite3';
+import { zValidator } from '@hono/zod-validator';
+import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { DrizzleRecurringPaymentRepository } from '@/infrastructure/repositories/DrizzleRecurringPaymentRepository';
 import { GetAllRecurringPaymentsUseCase } from '@/usecases/GetAllRecurringPaymentsUseCase';
 import { GetRecurringPaymentByIdUseCase, NotFoundError } from '@/usecases/GetRecurringPaymentByIdUseCase';
+import { CreateRecurringPaymentUseCase } from '@/usecases/CreateRecurringPaymentUseCase';
+import { UpdateRecurringPaymentUseCase } from '@/usecases/UpdateRecurringPaymentUseCase';
+import { CancelRecurringPaymentUseCase, AlreadyCancelledError } from '@/usecases/CancelRecurringPaymentUseCase';
+import { CreateRecurringPaymentSchema, UpdateRecurringPaymentSchema } from '@subscription-note/shared';
+import type * as schema from '@/infrastructure/db/schema';
 
-type Db = ReturnType<typeof drizzle>;
+type Db = BetterSQLite3Database<typeof schema>;
 
 // テストでインメモリ DB を注入できるよう、ファクトリ関数として export する（DI パターン）。
 // 本番では app.ts から本物の db を渡し、テストでは :memory: の db を渡す。
@@ -29,6 +35,50 @@ export function createRecurringPaymentsRoute(db: Db) {
     } catch (err) {
       if (err instanceof NotFoundError) {
         return c.json({ message: 'RecurringPayment not found' }, 404);
+      }
+      throw err;
+    }
+  });
+
+  route.post('/', zValidator('json', CreateRecurringPaymentSchema), async (c) => {
+    const body = c.req.valid('json');
+    const repository = new DrizzleRecurringPaymentRepository(db);
+    const useCase = new CreateRecurringPaymentUseCase(repository);
+    const payment = await useCase.execute(body);
+    return c.json(payment, 201);
+  });
+
+  route.put('/:id', zValidator('json', UpdateRecurringPaymentSchema), async (c) => {
+    const id = c.req.param('id');
+    const body = c.req.valid('json');
+    const repository = new DrizzleRecurringPaymentRepository(db);
+    const useCase = new UpdateRecurringPaymentUseCase(repository);
+
+    try {
+      const payment = await useCase.execute(id, body);
+      return c.json(payment);
+    } catch (err) {
+      if (err instanceof NotFoundError) {
+        return c.json({ message: 'RecurringPayment not found' }, 404);
+      }
+      throw err;
+    }
+  });
+
+  route.delete('/:id', async (c) => {
+    const id = c.req.param('id');
+    const repository = new DrizzleRecurringPaymentRepository(db);
+    const useCase = new CancelRecurringPaymentUseCase(repository);
+
+    try {
+      await useCase.execute(id);
+      return c.body(null, 204);
+    } catch (err) {
+      if (err instanceof NotFoundError) {
+        return c.json({ message: 'RecurringPayment not found' }, 404);
+      }
+      if (err instanceof AlreadyCancelledError) {
+        return c.json({ message: 'すでに解約済みです' }, 409);
       }
       throw err;
     }

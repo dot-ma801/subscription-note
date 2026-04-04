@@ -11,7 +11,7 @@ app.onError((err, c) => {
   if (err instanceof z.ZodError) {
     return c.json(
       {
-        errors: err.errors.map((e) => ({
+        errors: err.issues.map((e) => ({
           field: e.path.join('.'),
           message: e.message,
         })),
