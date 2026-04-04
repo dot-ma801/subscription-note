@@ -5,7 +5,8 @@ import { DrizzleRecurringPaymentRepository } from '@/infrastructure/repositories
 import { GetAllRecurringPaymentsUseCase } from '@/usecases/GetAllRecurringPaymentsUseCase';
 import { GetRecurringPaymentByIdUseCase, NotFoundError } from '@/usecases/GetRecurringPaymentByIdUseCase';
 import { CreateRecurringPaymentUseCase } from '@/usecases/CreateRecurringPaymentUseCase';
-import { CreateRecurringPaymentSchema } from '@subscription-note/shared';
+import { UpdateRecurringPaymentUseCase } from '@/usecases/UpdateRecurringPaymentUseCase';
+import { CreateRecurringPaymentSchema, UpdateRecurringPaymentSchema } from '@subscription-note/shared';
 import type * as schema from '@/infrastructure/db/schema';
 
 type Db = BetterSQLite3Database<typeof schema>;
@@ -44,6 +45,23 @@ export function createRecurringPaymentsRoute(db: Db) {
     const useCase = new CreateRecurringPaymentUseCase(repository);
     const payment = await useCase.execute(body);
     return c.json(payment, 201);
+  });
+
+  route.put('/:id', zValidator('json', UpdateRecurringPaymentSchema), async (c) => {
+    const id = c.req.param('id');
+    const body = c.req.valid('json');
+    const repository = new DrizzleRecurringPaymentRepository(db);
+    const useCase = new UpdateRecurringPaymentUseCase(repository);
+
+    try {
+      const payment = await useCase.execute(id, body);
+      return c.json(payment);
+    } catch (err) {
+      if (err instanceof NotFoundError) {
+        return c.json({ message: 'RecurringPayment not found' }, 404);
+      }
+      throw err;
+    }
   });
 
   return route;
