@@ -13,6 +13,7 @@
     "be:dev": "pnpm --filter @subscription-note/backend dev",
     "be:build": "pnpm --filter @subscription-note/backend build",
     "be:test": "pnpm --filter @subscription-note/backend test",
+    "be:test:coverage": "pnpm --filter @subscription-note/backend test:coverage",
     "db:generate": "pnpm --filter @subscription-note/backend db:generate",
     "db:migrate": "pnpm --filter @subscription-note/backend db:migrate",
     "db:studio": "pnpm --filter @subscription-note/backend db:studio"

@@ -1,36 +1,32 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-import { DrizzleRecurringPaymentRepository } from '@/infrastructure/repositories/DrizzleRecurringPaymentRepository';
+import type { IRecurringPaymentRepository } from '@/domain/repositories/IRecurringPaymentRepository';
 import { GetAllRecurringPaymentsUseCase } from '@/usecases/GetAllRecurringPaymentsUseCase';
 import { GetRecurringPaymentByIdUseCase, NotFoundError } from '@/usecases/GetRecurringPaymentByIdUseCase';
 import { CreateRecurringPaymentUseCase } from '@/usecases/CreateRecurringPaymentUseCase';
 import { UpdateRecurringPaymentUseCase } from '@/usecases/UpdateRecurringPaymentUseCase';
 import { CancelRecurringPaymentUseCase, AlreadyCancelledError } from '@/usecases/CancelRecurringPaymentUseCase';
 import { CreateRecurringPaymentSchema, UpdateRecurringPaymentSchema } from '@subscription-note/shared';
-import type * as schema from '@/infrastructure/db/schema';
 
-type Db = BetterSQLite3Database<typeof schema>;
-
-// テストでインメモリ DB を注入できるよう、ファクトリ関数として export する（DI パターン）。
-// 本番では app.ts から本物の db を渡し、テストでは :memory: の db を渡す。
-export function createRecurringPaymentsRoute(db: Db) {
+export function createRecurringPaymentsRoute(repository: IRecurringPaymentRepository) {
   const route = new Hono();
 
+  const getAllUseCase = new GetAllRecurringPaymentsUseCase(repository);
+  const getByIdUseCase = new GetRecurringPaymentByIdUseCase(repository);
+  const createUseCase = new CreateRecurringPaymentUseCase(repository);
+  const updateUseCase = new UpdateRecurringPaymentUseCase(repository);
+  const cancelUseCase = new CancelRecurringPaymentUseCase(repository);
+
   route.get('/', async (c) => {
-    const repository = new DrizzleRecurringPaymentRepository(db);
-    const useCase = new GetAllRecurringPaymentsUseCase(repository);
-    const payments = await useCase.execute();
+    const payments = await getAllUseCase.execute();
     return c.json(payments);
   });
 
   route.get('/:id', async (c) => {
     const id = c.req.param('id');
-    const repository = new DrizzleRecurringPaymentRepository(db);
-    const useCase = new GetRecurringPaymentByIdUseCase(repository);
 
     try {
-      const payment = await useCase.execute(id);
+      const payment = await getByIdUseCase.execute(id);
       return c.json(payment);
     } catch (err) {
       if (err instanceof NotFoundError) {
@@ -42,20 +38,16 @@ export function createRecurringPaymentsRoute(db: Db) {
 
   route.post('/', zValidator('json', CreateRecurringPaymentSchema), async (c) => {
     const body = c.req.valid('json');
-    const repository = new DrizzleRecurringPaymentRepository(db);
-    const useCase = new CreateRecurringPaymentUseCase(repository);
-    const payment = await useCase.execute(body);
+    const payment = await createUseCase.execute(body);
     return c.json(payment, 201);
   });
 
   route.put('/:id', zValidator('json', UpdateRecurringPaymentSchema), async (c) => {
     const id = c.req.param('id');
     const body = c.req.valid('json');
-    const repository = new DrizzleRecurringPaymentRepository(db);
-    const useCase = new UpdateRecurringPaymentUseCase(repository);
 
     try {
-      const payment = await useCase.execute(id, body);
+      const payment = await updateUseCase.execute(id, body);
       return c.json(payment);
     } catch (err) {
       if (err instanceof NotFoundError) {
@@ -67,11 +59,9 @@ export function createRecurringPaymentsRoute(db: Db) {
 
   route.delete('/:id', async (c) => {
     const id = c.req.param('id');
-    const repository = new DrizzleRecurringPaymentRepository(db);
-    const useCase = new CancelRecurringPaymentUseCase(repository);
 
     try {
-      await useCase.execute(id);
+      await cancelUseCase.execute(id);
       return c.body(null, 204);
     } catch (err) {
       if (err instanceof NotFoundError) {

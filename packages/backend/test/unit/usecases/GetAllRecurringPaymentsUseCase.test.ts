@@ -36,7 +36,6 @@ function makeRepository(payments: RecurringPayment[]): IRecurringPaymentReposito
     findById: vi.fn(),
     save: vi.fn(),
     update: vi.fn(),
-    delete: vi.fn(),
   };
 }
 

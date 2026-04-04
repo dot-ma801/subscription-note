@@ -35,10 +35,6 @@ export class DrizzleRecurringPaymentRepository implements IRecurringPaymentRepos
       .where(eq(recurringPayments.id, payment.id.value));
   }
 
-  async delete(id: RecurringPaymentId): Promise<void> {
-    await this.db.delete(recurringPayments).where(eq(recurringPayments.id, id.value));
-  }
-
   private rowToEntity(row: RecurringPaymentRow): RecurringPayment {
     return RecurringPayment.reconstruct({
       id: row.id,

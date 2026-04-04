@@ -25,7 +25,6 @@ function makeRepository(payment: RecurringPayment | null): IRecurringPaymentRepo
     findById: vi.fn().mockResolvedValue(payment),
     save: vi.fn(),
     update: vi.fn(),
-    delete: vi.fn(),
   };
 }
 
@@ -96,6 +95,23 @@ describe('GetRecurringPaymentByIdUseCase', () => {
 
       // Assert
       expect(result.nextBillingDate).not.toBeNull();
+    });
+
+    it('cancelled ステータスの場合 nextBillingDate が null になる', async () => {
+      // Arrange
+      const cancelledPayment = RecurringPayment.reconstruct({
+        id: EXISTING_ID,
+        ...PAYMENT_FIXTURE,
+        status: 'cancelled',
+      });
+      const repository = makeRepository(cancelledPayment);
+      const useCase = new GetRecurringPaymentByIdUseCase(repository);
+
+      // Act
+      const result = await useCase.execute(EXISTING_ID);
+
+      // Assert
+      expect(result.nextBillingDate).toBeNull();
     });
   });
 
