@@ -1,8 +1,11 @@
 import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { DrizzleRecurringPaymentRepository } from '@/infrastructure/repositories/DrizzleRecurringPaymentRepository';
 import { GetAllRecurringPaymentsUseCase } from '@/usecases/GetAllRecurringPaymentsUseCase';
 import { GetRecurringPaymentByIdUseCase, NotFoundError } from '@/usecases/GetRecurringPaymentByIdUseCase';
+import { CreateRecurringPaymentUseCase } from '@/usecases/CreateRecurringPaymentUseCase';
+import { CreateRecurringPaymentSchema } from '@subscription-note/shared';
 import type * as schema from '@/infrastructure/db/schema';
 
 type Db = BetterSQLite3Database<typeof schema>;
@@ -33,6 +36,14 @@ export function createRecurringPaymentsRoute(db: Db) {
       }
       throw err;
     }
+  });
+
+  route.post('/', zValidator('json', CreateRecurringPaymentSchema), async (c) => {
+    const body = c.req.valid('json');
+    const repository = new DrizzleRecurringPaymentRepository(db);
+    const useCase = new CreateRecurringPaymentUseCase(repository);
+    const payment = await useCase.execute(body);
+    return c.json(payment, 201);
   });
 
   return route;
