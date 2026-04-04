@@ -490,7 +490,6 @@ describe('予期しないエラーの再スロー', () => {
       findById: vi.fn().mockResolvedValue(null),
       save: vi.fn(),
       update: vi.fn(),
-      delete: vi.fn(),
       [method]: vi.fn().mockRejectedValue(unexpectedError),
     };
   }

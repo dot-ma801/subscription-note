@@ -25,7 +25,6 @@ function makeRepository(payment: RecurringPayment | null): IRecurringPaymentRepo
     findById: vi.fn().mockResolvedValue(payment),
     save: vi.fn(),
     update: vi.fn(),
-    delete: vi.fn(),
   };
 }
 

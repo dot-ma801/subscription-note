@@ -8,7 +8,6 @@ function makeRepository(): IRecurringPaymentRepository {
     findById: vi.fn(),
     save: vi.fn().mockResolvedValue(undefined),
     update: vi.fn(),
-    delete: vi.fn(),
   };
 }
 
