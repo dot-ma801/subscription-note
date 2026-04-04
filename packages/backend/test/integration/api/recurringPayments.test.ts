@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Hono } from 'hono';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
@@ -6,6 +6,7 @@ import { sql } from 'drizzle-orm';
 import { recurringPayments } from '@/infrastructure/db/schema';
 import { DrizzleRecurringPaymentRepository } from '@/infrastructure/repositories/DrizzleRecurringPaymentRepository';
 import { createRecurringPaymentsRoute } from '@/presentation/routes/recurringPayments';
+import type { IRecurringPaymentRepository } from '@/domain/repositories/IRecurringPaymentRepository';
 import * as schema from '@/infrastructure/db/schema';
 import type { RecurringPaymentListItem, RecurringPaymentDetail, CreateRecurringPaymentRequest } from '@subscription-note/shared';
 
@@ -476,6 +477,82 @@ describe('DELETE /api/recurring-payments/:id', () => {
       // Assert
       const body = await response.json() as { message: string };
       expect(body.message).toBe('すでに解約済みです');
+    });
+  });
+});
+
+describe('予期しないエラーの再スロー', () => {
+  const unexpectedError = new Error('DB connection lost');
+
+  function makeBrokenRepository(method: keyof IRecurringPaymentRepository): IRecurringPaymentRepository {
+    return {
+      findAll: vi.fn().mockResolvedValue([]),
+      findById: vi.fn().mockResolvedValue(null),
+      save: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      [method]: vi.fn().mockRejectedValue(unexpectedError),
+    };
+  }
+
+  describe('GET /:id でリポジトリが予期しないエラーをスローした場合', () => {
+    it('500 を返す', async () => {
+      // Arrange
+      const app = new Hono().route(
+        '/api/recurring-payments',
+        createRecurringPaymentsRoute(makeBrokenRepository('findById')),
+      );
+
+      // Act
+      const response = await app.request('/api/recurring-payments/some-id');
+
+      // Assert
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe('PUT /:id でリポジトリが予期しないエラーをスローした場合', () => {
+    it('500 を返す', async () => {
+      // Arrange
+      const app = new Hono().route(
+        '/api/recurring-payments',
+        createRecurringPaymentsRoute(makeBrokenRepository('findById')),
+      );
+      const body = {
+        name: 'Netflix',
+        price: 1490,
+        billingInterval: { intervalType: 'month', frequency: 1, day: 15 },
+        status: 'active',
+        memo: '',
+      };
+
+      // Act
+      const response = await app.request('/api/recurring-payments/some-id', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      // Assert
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe('DELETE /:id でリポジトリが予期しないエラーをスローした場合', () => {
+    it('500 を返す', async () => {
+      // Arrange
+      const app = new Hono().route(
+        '/api/recurring-payments',
+        createRecurringPaymentsRoute(makeBrokenRepository('findById')),
+      );
+
+      // Act
+      const response = await app.request('/api/recurring-payments/some-id', {
+        method: 'DELETE',
+      });
+
+      // Assert
+      expect(response.status).toBe(500);
     });
   });
 });
