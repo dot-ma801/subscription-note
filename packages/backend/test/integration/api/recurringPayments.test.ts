@@ -4,13 +4,13 @@ import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { sql } from 'drizzle-orm';
 import { recurringPayments } from '@/infrastructure/db/schema';
+import { DrizzleRecurringPaymentRepository } from '@/infrastructure/repositories/DrizzleRecurringPaymentRepository';
 import { createRecurringPaymentsRoute } from '@/presentation/routes/recurringPayments';
 import * as schema from '@/infrastructure/db/schema';
 import type { RecurringPaymentListItem, RecurringPaymentDetail, CreateRecurringPaymentRequest } from '@subscription-note/shared';
 
 function createInMemoryDb() {
   const sqlite = new Database(':memory:');
-  // { schema } を渡すことで db.query.* の型安全なリレーショナルクエリ API が有効になる
   const db = drizzle(sqlite, { schema });
 
   db.run(sql`
@@ -32,6 +32,10 @@ function createInMemoryDb() {
   return db;
 }
 
+function createRepository(db: ReturnType<typeof createInMemoryDb>) {
+  return new DrizzleRecurringPaymentRepository(db);
+}
+
 const SAMPLE_PAYMENT = {
   id: '01900000-0000-7000-8000-000000000001',
   name: 'Netflix',
@@ -51,8 +55,7 @@ describe('GET /api/recurring-payments', () => {
 
   beforeEach(() => {
     const db = createInMemoryDb();
-    // route() の第2引数はマウントするサブルーター。createRecurringPaymentsRoute(db) は DB をDIした Hono ルーターを返す
-    app = new Hono().route('/api/recurring-payments', createRecurringPaymentsRoute(db));
+    app = new Hono().route('/api/recurring-payments', createRecurringPaymentsRoute(createRepository(db)));
   });
 
   describe('データが存在しない場合', () => {
@@ -75,7 +78,7 @@ describe('GET /api/recurring-payments', () => {
       // Arrange
       const db = createInMemoryDb();
       await db.insert(recurringPayments).values(SAMPLE_PAYMENT);
-      app = new Hono().route('/api/recurring-payments', createRecurringPaymentsRoute(db));
+      app = new Hono().route('/api/recurring-payments', createRecurringPaymentsRoute(createRepository(db)));
 
       // Act
       const response = await app.request('/api/recurring-payments');
@@ -91,7 +94,7 @@ describe('GET /api/recurring-payments', () => {
       // Arrange
       const db = createInMemoryDb();
       await db.insert(recurringPayments).values(SAMPLE_PAYMENT);
-      app = new Hono().route('/api/recurring-payments', createRecurringPaymentsRoute(db));
+      app = new Hono().route('/api/recurring-payments', createRecurringPaymentsRoute(createRepository(db)));
 
       // Act
       const response = await app.request('/api/recurring-payments');
@@ -116,7 +119,7 @@ describe('GET /api/recurring-payments/:id', () => {
 
   beforeEach(() => {
     db = createInMemoryDb();
-    app = new Hono().route('/api/recurring-payments', createRecurringPaymentsRoute(db));
+    app = new Hono().route('/api/recurring-payments', createRecurringPaymentsRoute(createRepository(db)));
   });
 
   describe('存在する ID を指定した場合', () => {
@@ -188,7 +191,7 @@ describe('POST /api/recurring-payments', () => {
 
   beforeEach(() => {
     db = createInMemoryDb();
-    app = new Hono().route('/api/recurring-payments', createRecurringPaymentsRoute(db));
+    app = new Hono().route('/api/recurring-payments', createRecurringPaymentsRoute(createRepository(db)));
   });
 
   const VALID_BODY: CreateRecurringPaymentRequest = {
@@ -298,7 +301,7 @@ describe('PUT /api/recurring-payments/:id', () => {
   beforeEach(async () => {
     db = createInMemoryDb();
     await db.insert(recurringPayments).values(SAMPLE_PAYMENT);
-    app = new Hono().route('/api/recurring-payments', createRecurringPaymentsRoute(db));
+    app = new Hono().route('/api/recurring-payments', createRecurringPaymentsRoute(createRepository(db)));
   });
 
   const UPDATE_BODY = {
@@ -395,7 +398,7 @@ describe('DELETE /api/recurring-payments/:id', () => {
   beforeEach(async () => {
     db = createInMemoryDb();
     await db.insert(recurringPayments).values(SAMPLE_PAYMENT);
-    app = new Hono().route('/api/recurring-payments', createRecurringPaymentsRoute(db));
+    app = new Hono().route('/api/recurring-payments', createRecurringPaymentsRoute(createRepository(db)));
   });
 
   describe('active な支払いを解約する場合', () => {
