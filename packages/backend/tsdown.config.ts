@@ -7,4 +7,7 @@ export default defineConfig({
   outDir: 'dist',
   clean: true,
   sourcemap: true,
+  copy: [
+    { from: 'drizzle', to: 'dist/drizzle' }
+  ],
 })
